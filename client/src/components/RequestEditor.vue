@@ -96,17 +96,32 @@ function removeHeader(idx) { request.value.headers.splice(idx, 1); }
 
 /**
  * Save the current request to disk as <name>.req.json inside the workspace.
- * If a file is currently open (activeFile), overwrite it.
- * Otherwise, create it at the workspace root.
+ * - If no file is open yet → create new file at workspace root.
+ * - If a file is open AND name matches the original filename → overwrite it.
+ * - If a file is open BUT name changed → save as a NEW file (original is kept).
  */
 async function onSave() {
   if (!workspacePath.value) return;
   saving.value = true;
   try {
     const safeName = (request.value.name || 'unnamed').replace(/[/\\?%*:|"<>]/g, '-');
-    const filePath = activeFile.value
-      ? activeFile.value  // overwrite existing file
-      : path.join(workspacePath.value, `${safeName}.req.json`);
+    const newFileName = `${safeName}.req.json`;
+
+    let filePath;
+    if (activeFile.value) {
+      // Check if the name changed by comparing the new filename to the active file's basename
+      const currentBasename = activeFile.value.split(/[\\/]/).pop();
+      if (currentBasename === newFileName) {
+        // Same name → overwrite
+        filePath = activeFile.value;
+      } else {
+        // Name changed → create a new file at workspace root
+        filePath = path.join(workspacePath.value, newFileName);
+      }
+    } else {
+      // No file open yet → create at workspace root
+      filePath = path.join(workspacePath.value, newFileName);
+    }
 
     await writeFile(filePath, request.value);
     activeFile.value = filePath;

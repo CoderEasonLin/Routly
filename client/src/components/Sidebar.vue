@@ -55,7 +55,16 @@ async function onOpenFolder() {
 async function onOpenFile(filePath) {
   activeFile.value = filePath;
   const { data } = await readFile(filePath);
-  currentRequest.value = { ...currentRequest.value, ...data };
+
+  // Derive name from filename as fallback if JSON doesn't have one
+  const fileBasename = filePath.split(/[/\\]/).pop();
+  const derivedName = fileBasename.replace(/\.req\.json$/, '');
+
+  currentRequest.value = {
+    ...currentRequest.value,
+    ...data,
+    name: data.name || derivedName,
+  };
 }
 </script>
 

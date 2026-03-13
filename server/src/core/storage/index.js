@@ -43,15 +43,16 @@ export async function buildTree(dirPath, rootPath) {
 
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry.name);
+    // Use relative path only for display; pass absolute path for API calls
     const relPath = path.relative(rootPath, fullPath).replace(/\\/g, '/');
 
     if (entry.isDirectory()) {
       const subChildren = await buildTree(fullPath, rootPath);
-      children.push({ name: entry.name, type: 'directory', path: relPath, children: subChildren });
+      children.push({ name: entry.name, type: 'directory', path: fullPath, relPath, children: subChildren });
     } else if (entry.name.endsWith(REQUEST_EXT)) {
-      children.push({ name: entry.name, type: 'file', entity_type: 'request', path: relPath });
+      children.push({ name: entry.name, type: 'file', entity_type: 'request', path: fullPath, relPath });
     } else if (entry.name.endsWith(ENV_EXT)) {
-      children.push({ name: entry.name, type: 'file', entity_type: 'environment', path: relPath });
+      children.push({ name: entry.name, type: 'file', entity_type: 'environment', path: fullPath, relPath });
     }
   }
 
